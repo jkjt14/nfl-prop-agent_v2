@@ -1,0 +1,9 @@
+player,team,market,projection,source
+Patrick Mahomes,KC,passing_yards,304.5,Model Composite
+Josh Allen,BUF,passing_yards,287.1,Model Composite
+Lamar Jackson,BAL,rushing_yards,65.3,Model Composite
+Christian McCaffrey,SF,rushing_yards,88.7,Model Composite
+Justin Jefferson,MIN,receiving_yards,103.9,Model Composite
+Tyreek Hill,MIA,receiving_yards,108.4,Model Composite
+Travis Kelce,KC,receiving_yards,82.6,Model Composite
+Amon-Ra St. Brown,DET,receiving_yards,94.2,Model Composite
