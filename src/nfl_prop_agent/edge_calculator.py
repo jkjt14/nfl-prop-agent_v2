@@ -9,7 +9,7 @@ from typing import Iterable, List, Sequence
 import pandas as pd
 from rapidfuzz import fuzz, process
 
-from .config import settings
+from .config import get_settings
 from .data_models import EdgeResult, PlayerProp, Projection
 from .exceptions import MatchNotFoundError
 from .logging_utils import configure_logging
@@ -33,7 +33,7 @@ def american_to_implied_prob(odds: int) -> float:
 def logistic_probability(line: float, projection: float, slope: float | None = None) -> float:
     """Approximate the over hit probability using a logistic transform."""
 
-    slope_value = slope if slope is not None else settings.logistic_slope
+    slope_value = slope if slope is not None else get_settings().logistic_slope
     diff = projection - line
     prob = 1.0 / (1.0 + math.exp(-slope_value * diff))
     LOGGER.debug(
@@ -60,7 +60,10 @@ class EdgeCalculator:
         self._projections = list(projections)
         if not self._projections:
             raise ValueError("At least one projection is required to build EdgeCalculator.")
-        self._min_match_score = min_match_score if min_match_score is not None else settings.min_match_score
+        settings = get_settings()
+        self._min_match_score = (
+            min_match_score if min_match_score is not None else settings.min_match_score
+        )
         LOGGER.info(
             "EdgeCalculator initialized with %d projections and min_match_score=%d",
             len(self._projections),

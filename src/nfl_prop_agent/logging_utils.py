@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from .config import settings
+from .config import get_settings
 
 
 def configure_logging(name: Optional[str] = None) -> logging.Logger:
@@ -20,5 +20,6 @@ def configure_logging(name: Optional[str] = None) -> logging.Logger:
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+    settings = get_settings()
     logger.setLevel(settings.log_level.upper())
     return logger
