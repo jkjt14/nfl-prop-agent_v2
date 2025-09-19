@@ -5,12 +5,29 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Sequence
+from urllib.parse import urlparse
 
+import pandas as pd
+
+from .data_loader import load_props_from_dataframe, load_projections_from_dataframe
 from .data_models import PlayerProp, Projection
 from .logging_utils import configure_logging
-from .pipeline import build_edge_report, load_props_from_url, load_projections_from_url
+from .pipeline import build_edge_report
 
 LOGGER = configure_logging(__name__)
+
+
+def _read_csv_from_arg(value: str) -> pd.DataFrame:
+    """Return a :class:`pandas.DataFrame` from a CLI argument value."""
+
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"}:
+        return pd.read_csv(value)
+
+    path = Path(value)
+    if not path.exists():
+        raise FileNotFoundError(f"Not found: {path}")
+    return pd.read_csv(path)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -36,10 +53,12 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
     projections: Sequence[Projection] | None = None
     if args.props_url:
         LOGGER.info("Loading props from %s", args.props_url)
-        props = load_props_from_url(args.props_url)
+        props_df = _read_csv_from_arg(args.props_url)
+        props = load_props_from_dataframe(props_df)
     if args.projections_url:
         LOGGER.info("Loading projections from %s", args.projections_url)
-        projections = load_projections_from_url(args.projections_url)
+        projections_df = _read_csv_from_arg(args.projections_url)
+        projections = load_projections_from_dataframe(projections_df)
     report = build_edge_report(props=props, projections=projections)
     if args.output:
         report.to_csv(args.output, index=False)
