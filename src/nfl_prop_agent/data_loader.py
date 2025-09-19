@@ -8,7 +8,7 @@ from typing import Iterable, List
 import pandas as pd
 import requests
 
-from .config import settings
+from .config import get_settings
 from .data_models import PlayerProp, Projection
 from .exceptions import DataSourceError
 from .logging_utils import configure_logging
@@ -19,6 +19,7 @@ LOGGER = configure_logging(__name__)
 def load_local_csv(filename: str) -> pd.DataFrame:
     """Load a CSV file bundled with the package into a :class:`pandas.DataFrame`."""
 
+    settings = get_settings()
     path = settings.data_directory / filename
     if not path.exists():
         raise DataSourceError(f"Expected data file {path} was not found.")
@@ -29,6 +30,7 @@ def load_local_csv(filename: str) -> pd.DataFrame:
 def fetch_remote_csv(url: str) -> pd.DataFrame:
     """Fetch a CSV file from a remote URL, raising :class:`DataSourceError` on failure."""
 
+    settings = get_settings()
     LOGGER.info("Fetching remote CSV from %s", url)
     try:
         response = requests.get(url, timeout=settings.http_timeout)
