@@ -138,7 +138,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _fetch_odds_for_events(events: Iterable[dict[str, object]], markets: Sequence[str]) -> pd.DataFrame:
+def _fetch_odds_for_events(
+    events: Iterable[dict[str, object]],
+    markets: Sequence[str],
+    *,
+    ma_books_only: bool = True,
+) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
     for event in events:
         event_id = _event_identifier(event)
@@ -148,7 +153,7 @@ def _fetch_odds_for_events(events: Iterable[dict[str, object]], markets: Sequenc
 
         label = _event_label(event)
         LOGGER.info("Fetching player props for %s (%s).", label, event_id)
-        event_df = get_event_player_props(event_id, markets)
+        event_df = get_event_player_props(event_id, markets, ma_books_only=ma_books_only)
         if event_df.empty:
             LOGGER.info("No props returned for %s.", label)
             continue
@@ -186,7 +191,7 @@ def run_workflow(args: argparse.Namespace) -> pd.DataFrame:
         edges = pd.DataFrame()
     else:
         LOGGER.info("Received %s events. Requesting markets: %s", len(events), ", ".join(args.markets))
-        odds = _fetch_odds_for_events(events, args.markets)
+        odds = _fetch_odds_for_events(events, args.markets, ma_books_only=args.ma_books)
         odds = _filter_ma_books(odds, args.ma_books)
         edges = join_and_score(projections, odds)
 
