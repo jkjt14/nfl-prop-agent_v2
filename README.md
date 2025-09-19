@@ -52,7 +52,7 @@ Launch the live workflow locally:
 streamlit run app.py
 ```
 
-The app loads projections via `prop_model.io`, fetches odds from The Odds API, and publishes summaries plus Slack-ready
+The app loads projections via `nfl_prop_agent.data_loader`, fetches odds from The Odds API, and publishes summaries plus Slack-ready
 messages.
 
 ### How to add name overrides
@@ -73,7 +73,7 @@ when calculating join pairs. Restart the CLI or Streamlit session after editing 
 ### Troubleshooting FAQ
 
 - **No odds returned:** confirm `ODDS_API_KEY` is present and valid, verify the requested markets exist in
-  `prop_model.config.MARKETS`, and check The Odds API status page for outages.
+  `nfl_prop_agent.config.MARKETS`, and check The Odds API status page for outages.
 - **Unmatched player names:** ensure both feeds share markets, update `data/manual_overrides.csv`, or lower the
   `NFL_PROP_MIN_MATCH_SCORE` environment variable for more permissive fuzzy matching.
 - **Missing projection standard deviation:** the staking model requires `*_sd` columns (for example `rush_yds_sd`). If a
