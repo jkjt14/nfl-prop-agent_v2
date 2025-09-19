@@ -159,8 +159,24 @@ def get_event_player_props(
     *,
     regions: str = "us",
     odds_format: str = "american",
+    ma_books_only: bool = True,
 ) -> pd.DataFrame:
-    """Retrieve player prop odds for a specific event."""
+    """Retrieve player prop odds for a specific event.
+
+    Parameters
+    ----------
+    event_id:
+        Identifier returned from :func:`get_upcoming_nfl_events`.
+    markets:
+        Iterable of market identifiers to request from The Odds API.
+    regions:
+        Odds API regions filter (defaults to ``"us"``).
+    odds_format:
+        Odds format requested from the API (defaults to ``"american"``).
+    ma_books_only:
+        When ``True`` (default), filter the response to the Massachusetts
+        sportsbook list defined in :mod:`prop_model.config`.
+    """
 
     market_list = list(markets)
     if not market_list:
@@ -197,7 +213,7 @@ def get_event_player_props(
         title = bookmaker.get("title") or ""
         if not title:
             continue
-        if not _is_ma_book(title):
+        if ma_books_only and not _is_ma_book(title):
             _LOGGER.info("Skipping bookmaker '%s' not in Massachusetts list.", title)
             continue
 
