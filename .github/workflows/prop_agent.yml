@@ -1,0 +1,39 @@
+name: Prop Agent Run
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  run-prop-agent:
+    runs-on: ubuntu-latest
+    env:
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run prop model
+        run: |
+          python -m prop_model.cli run \
+            --projections data/sample_projections.csv \
+            --markets player_pass_yds player_receptions \
+            --ma-books true \
+            --slack false
+
+      - name: Upload output CSVs
+        uses: actions/upload-artifact@v4
+        with:
+          name: prop-agent-output
+          path: out/*.csv
+          if-no-files-found: error
