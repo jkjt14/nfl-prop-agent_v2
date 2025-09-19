@@ -17,17 +17,14 @@ from .pipeline import build_edge_report
 LOGGER = configure_logging(__name__)
 
 
-def _read_csv_from_arg(value: str) -> pd.DataFrame:
-    """Return a :class:`pandas.DataFrame` from a CLI argument value."""
-
-    parsed = urlparse(value)
-    if parsed.scheme in {"http", "https"}:
-        return pd.read_csv(value)
-
-    path = Path(value)
-    if not path.exists():
-        raise FileNotFoundError(f"Not found: {path}")
-    return pd.read_csv(path)
+def _read_csv_from_arg(s: str) -> pd.DataFrame:
+    u = urlparse(s)
+    if u.scheme in {"http", "https"}:
+        return pd.read_csv(s)
+    p = Path(s)
+    if not p.exists():
+        raise FileNotFoundError(f"Not found: {p}")
+    return pd.read_csv(p)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
