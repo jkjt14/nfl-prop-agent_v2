@@ -5,13 +5,15 @@ from __future__ import annotations
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import Field, field_validator, computed_field
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
+
+# Load .env if present (non-fatal if missing)
 load_dotenv(dotenv_path=Path(".env"), override=False)
 
 MA_BOOKS_DEFAULT = [
@@ -38,7 +40,7 @@ MARKETS_DEFAULT = [
 
 
 class Settings(BaseSettings):
-    """Runtime settings loaded from environment and sane defaults."""
+    """Runtime settings loaded from env with sane defaults (Pydantic v2)."""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -50,8 +52,8 @@ class Settings(BaseSettings):
     MARKETS: list[str] = Field(default_factory=lambda: MARKETS_DEFAULT.copy())
 
     # Guardrails
-    ODDS_MIN: int = Field(default=-200)     # ignore shorter than -200
-    ODDS_MAX: int = Field(default=500)      # ignore longer than +500
+    ODDS_MIN: int = Field(default=-200)      # ignore shorter than -200
+    ODDS_MAX: int = Field(default=500)       # ignore longer than +500
     MIN_BOOKS: int = Field(default=3)
     MAX_VIG: float = Field(default=0.06)
 
@@ -93,8 +95,5 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
+    """Return a cached Settings instance."""
     return Settings()
-
-
-# Lazy, global accessor (do NOT import this in __init__)
-settings: Settings = get_settings()
