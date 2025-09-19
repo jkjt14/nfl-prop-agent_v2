@@ -12,7 +12,8 @@ requires-python = ">=3.11"
 dependencies = [
     "pandas>=2.1",
     "requests>=2.31",
-    "pydantic>=1.10,<3",
+    "pydantic>=2,<3",
+    "pydantic-settings>=2.5",
     "rapidfuzz>=3.1",
     "python-dotenv>=1.0",
     "streamlit>=1.29"
@@ -24,3 +25,7 @@ addopts = "-ra"
 testpaths = [
     "tests"
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["nfl_prop_agent*"]
