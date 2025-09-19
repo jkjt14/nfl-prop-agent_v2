@@ -2,6 +2,7 @@
 
 from . import config as config  # re-export for convenience
  codex/create-nfl-player-prop-edge-project-in-python-dzrbej
+ codex/create-nfl-player-prop-edge-project-in-python-dzrbej
 from . import io as io
 from . import schemas as schemas
 
@@ -15,4 +16,9 @@ __all__ = ["config", "schemas"]
 
 __all__ = ["config"]
  main
+ main
+
+from . import schemas as schemas
+
+__all__ = ["config", "schemas"]
  main
