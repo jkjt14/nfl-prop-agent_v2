@@ -1,7 +1,4 @@
 """Top-level package for the NFL prop edge toolkit."""
 
-from .config import settings
-from .edge_calculator import EdgeCalculator
-from .streamlit_app import run as run_app
-
-__all__ = ["settings", "EdgeCalculator", "run_app"]
+# Avoid importing heavy modules or settings here to keep `--help` fast/safe.
+__all__ = []
