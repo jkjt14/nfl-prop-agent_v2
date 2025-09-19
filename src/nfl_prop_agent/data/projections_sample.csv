@@ -1,0 +1,5 @@
+player,team,market,projection,source
+Patrick Mahomes,KC,passing_yards,301.2,Model A
+Josh Allen,BUF,passing_yards,283.4,Model A
+Justin Jefferson,MIN,receiving_yards,102.3,Model A
+Christian McCaffrey,SF,rushing_yards,85.1,Model A
