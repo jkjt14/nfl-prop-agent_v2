@@ -1,5 +1,7 @@
-cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak 2>/dev/null || true
+# 0) Backup the current (broken) CLI file
+cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak.$(date +%s) 2>/dev/null || true
 
+# 1) Overwrite the file completely
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -109,7 +111,8 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
     if (args.bankroll is not None) and ("projected_probability" in report.columns) and ("odds" in report.columns):
         def _b_from_american(o: float) -> float:
             # profit multiple per 1 unit staked (not including stake)
-            return (o / 100.0) if float(o) > 0 else (100.0 / abs(float(o)))
+            o = float(o)
+            return (o / 100.0) if o > 0 else (100.0 / abs(o))
 
         b = report["odds"].astype(float).apply(_b_from_american)
         p = report["projected_probability"].clip(0, 1)
@@ -139,13 +142,13 @@ if __name__ == "__main__":
     main()
 PY
 
-# normalize line endings & tabs; clear caches
+# 2) Normalize newlines/tabs and clear caches
 sed -i 's/\r$//' src/nfl_prop_agent/cli.py
 sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
 find src -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 find src -name '*.pyc' -delete 2>/dev/null || true
 
-# quick compile check
+# 3) Quick compile test (should print OK)
 python - <<'PY'
 import compileall, sys
 ok = compileall.compile_file('src/nfl_prop_agent/cli.py', quiet=1)
