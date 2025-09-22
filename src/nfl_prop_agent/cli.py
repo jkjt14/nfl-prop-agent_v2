@@ -1,7 +1,6 @@
-# backup the current file (optional)
+# backup (optional)
 cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak 2>/dev/null || true
 
-# write a known-good version
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -52,7 +51,6 @@ def _read_csv_local_or_url(url_or_path) -> pd.DataFrame:
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Generate an NFL player prop edge report.")
     parser.add_argument("--min-match-score", type=int, default=None,
                         help="Override NPA_MIN_MATCH_SCORE for this run.")
@@ -62,20 +60,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Bankroll amount for Kelly sizing. If omitted, Kelly columns are not added.")
     parser.add_argument("--kelly-fraction", type=float, default=0.5,
                         help="Kelly fraction (0–1). Default 0.5 (half Kelly).")
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Optional path to write the report as CSV. Printed to stdout when omitted.",
-        default=None,
-    )
+    parser.add_argument("--output", type=Path,
+                        help="Optional path to write the report as CSV. Printed to stdout when omitted.",
+                        default=None)
     return parser.parse_args(argv)
 
 
 def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
-    """Run the CLI and return the resulting DataFrame."""
     args = parse_args(argv)
 
-    # Log the effective logistic slope we are using (settings or env, else 1.0)
+    # Log the effective logistic slope (settings or env, else 1.0)
     try:
         from .edge_calculator import get_settings as _get_settings
         slope = (getattr(_get_settings(), "logistic_slope", None)
@@ -84,7 +78,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
     except Exception as e:
         LOGGER.debug("Could not determine logistic_slope: %s", e)
 
-    # Only pass kwargs that build_edge_report actually accepts.
+    # Only pass kwargs that build_edge_report accepts.
     kwargs: dict = {}
     if getattr(args, "min_match_score", None) is not None:
         kwargs["min_match_score"] = args.min_match_score
@@ -104,19 +98,17 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
 
     report = build_edge_report(props=props, projections=projections, **kwargs)
 
-    # Ensure a 'side' column exists (based on projected_probability)
+    # Ensure 'side' column exists (Over/Under by projected_probability)
     if "side" not in report.columns:
         insert_pos = report.columns.get_loc("odds") + 1 if "odds" in report.columns else len(report.columns)
         if "projected_probability" in report.columns:
             report.insert(insert_pos, "side",
-            np.where(report["projected_probability"] >= 0.5, "Over", "Under"))
+                          np.where(report["projected_probability"] >= 0.5, "Over", "Under"))
         else:
             report.insert(insert_pos, "side", "")
 
-    # Optional Kelly sizing columns
-    if (getattr(args, "bankroll", None) is not None
-            and "projected_probability" in report.columns
-            and "odds" in report.columns):
+    # Kelly sizing (only if bankroll provided and required cols present)
+    if args.bankroll is not None and "projected_probability" in report.columns and "odds" in report.columns:
         def _b_from_american(o: float) -> float:
             # profit multiple per 1 unit staked (not including stake)
             return (o / 100.0) if o > 0 else (100.0 / abs(o))
@@ -142,14 +134,13 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
 
 
 def main() -> None:
-    """Entry-point for the console script."""
     run_cli()
 
 
-if __name__ == "__main__":  # pragma: no cover - manual execution hook
+if __name__ == "__main__":
     main()
 PY
 
-# sanitize newlines & tabs just in case
+# normalize line-endings & tabs just in case
 sed -i 's/\r$//' src/nfl_prop_agent/cli.py
 sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
