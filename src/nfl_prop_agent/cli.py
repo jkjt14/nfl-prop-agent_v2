@@ -1,7 +1,5 @@
-# 1) Back up the broken file (just in case)
 cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak.$(date +%s) 2>/dev/null || true
 
-# 2) Overwrite cli.py with a clean implementation (includes bankroll/Kelly + slope logging)
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -105,38 +103,17 @@ if __name__ == "__main__":
     main()
 PY
 
-# 3) Normalize endings, replace tabs with spaces (belt & suspenders)
+# normalize, clear caches, compile-check, reinstall
 sed -i 's/\r$//' src/nfl_prop_agent/cli.py
 sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
-
-# 4) Clear pyc caches so Python doesn't load stale bytecode
 find src -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 find src -name '*.pyc' -delete 2>/dev/null || true
 
-# 5) Compile-check the fresh file
 python - <<'PY'
 import compileall, sys
 ok = compileall.compile_file('src/nfl_prop_agent/cli.py', quiet=1)
 print("OK" if ok else "FAIL"); sys.exit(0 if ok else 1)
 PY
 
-# 6) Reinstall in editable mode and run your command
+pip uninstall -y nfl-prop-agent
 pip install -e .
-
-NPA_LOGISTIC_SLOPE=0.03 \
-python -m nfl_prop_agent.cli \
-  --props-url ./src/nfl_prop_agent/data/props_sample.csv \
-  --projections-url ./src/nfl_prop_agent/data/projections_sample.csv \
-  --min-match-score 90 \
-  --bankroll 1000 \
-  --kelly-fraction 0.5 \
-  --output out/edge_report.csv
-
-# 7) Confirm Kelly columns exist
-python - <<'PY'
-import pandas as pd
-df = pd.read_csv("out/edge_report.csv")
-print(df.columns.tolist())
-print(df[["player","market","odds","projected_probability","edge",
-          "kelly_fraction","kelly_fraction_used","kelly_stake"]].to_string(index=False))
-PY
