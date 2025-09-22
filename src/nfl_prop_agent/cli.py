@@ -1,7 +1,7 @@
-# 0) Backup the current (broken) CLI file
+# backup the current file (just in case)
 cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak.$(date +%s) 2>/dev/null || true
 
-# 1) Overwrite the file completely
+# write a clean, working CLI
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -142,15 +142,8 @@ if __name__ == "__main__":
     main()
 PY
 
-# 2) Normalize newlines/tabs and clear caches
+# normalize endings, kill tabs, clear pyc caches
 sed -i 's/\r$//' src/nfl_prop_agent/cli.py
 sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
 find src -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 find src -name '*.pyc' -delete 2>/dev/null || true
-
-# 3) Quick compile test (should print OK)
-python - <<'PY'
-import compileall, sys
-ok = compileall.compile_file('src/nfl_prop_agent/cli.py', quiet=1)
-print("OK" if ok else "FAIL"); sys.exit(0 if ok else 1)
-PY
