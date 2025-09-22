@@ -1,7 +1,5 @@
-# 1) Backup (optional)
 cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak 2>/dev/null || true
 
-# 2) Overwrite with a clean version
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -79,7 +77,6 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
     except Exception as e:
         LOGGER.debug("Could not determine logistic_slope: %s", e)
 
-    # Only pass kwargs that build_edge_report accepts.
     kwargs: dict = {}
     if getattr(args, "min_match_score", None) is not None:
         kwargs["min_match_score"] = args.min_match_score
@@ -99,7 +96,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
 
     report = build_edge_report(props=props, projections=projections, **kwargs)
 
-    # Ensure 'side' column exists (Over/Under by projected_probability)
+    # Ensure 'side' column exists (simple Over/Under based on projected_probability)
     if "side" not in report.columns:
         insert_pos = report.columns.get_loc("odds") + 1 if "odds" in report.columns else len(report.columns)
         if "projected_probability" in report.columns:
@@ -112,7 +109,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
     if (args.bankroll is not None) and ("projected_probability" in report.columns) and ("odds" in report.columns):
         def _b_from_american(o: float) -> float:
             # profit multiple per 1 unit staked (not including stake)
-            return (o / 100.0) if o > 0 else (100.0 / abs(o))
+            return (o / 100.0) if float(o) > 0 else (100.0 / abs(float(o)))
 
         b = report["odds"].astype(float).apply(_b_from_american)
         p = report["projected_probability"].clip(0, 1)
@@ -142,11 +139,13 @@ if __name__ == "__main__":
     main()
 PY
 
-# 3) Normalize line endings & tabs (defensive)
+# normalize line endings & tabs; clear caches
 sed -i 's/\r$//' src/nfl_prop_agent/cli.py
 sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
+find src -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+find src -name '*.pyc' -delete 2>/dev/null || true
 
-# 4) Compile check
+# quick compile check
 python - <<'PY'
 import compileall, sys
 ok = compileall.compile_file('src/nfl_prop_agent/cli.py', quiet=1)
