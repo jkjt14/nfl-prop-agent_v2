@@ -1,3 +1,7 @@
+# backup the current file (just in case)
+cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak 2>/dev/null || true
+
+# overwrite with a clean, working version
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -109,7 +113,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
         else:
             report.insert(insert_pos, "side", "")
 
-    # Optional Kelly sizing columns
+    # Optional Kelly sizing columns (top-level, not inside the output block)
     if (getattr(args, "bankroll", None) is not None
             and "projected_probability" in report.columns
             and "odds" in report.columns):
@@ -117,7 +121,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
             # profit multiple per 1 unit staked (not including stake)
             return (o / 100.0) if o > 0 else (100.0 / abs(o))
 
-        b = report["odds"].apply(_b_from_american)
+        b = report["odds"].astype(float).apply(_b_from_american)
         p = report["projected_probability"].clip(0, 1)
         q = 1 - p
         kelly = ((b * p) - q) / b
