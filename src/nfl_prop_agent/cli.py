@@ -1,6 +1,7 @@
-# backup (optional)
+# 1) Backup (optional)
 cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak 2>/dev/null || true
 
+# 2) Overwrite with a clean version
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -57,7 +58,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--props-url", help="CSV URL or path for sportsbook props", default=None)
     parser.add_argument("--projections-url", help="CSV URL or path for projections", default=None)
     parser.add_argument("--bankroll", type=float, default=None,
-                        help="Bankroll amount for Kelly sizing. If omitted, Kelly columns are not added.")
+                        help="Bankroll for Kelly sizing. If omitted, Kelly columns are not added.")
     parser.add_argument("--kelly-fraction", type=float, default=0.5,
                         help="Kelly fraction (0–1). Default 0.5 (half Kelly).")
     parser.add_argument("--output", type=Path,
@@ -102,13 +103,13 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
     if "side" not in report.columns:
         insert_pos = report.columns.get_loc("odds") + 1 if "odds" in report.columns else len(report.columns)
         if "projected_probability" in report.columns:
-            report.insert(insert_pos, "side",
-                          np.where(report["projected_probability"] >= 0.5, "Over", "Under"))
+            side = np.where(report["projected_probability"] >= 0.5, "Over", "Under")
         else:
-            report.insert(insert_pos, "side", "")
+            side = ""
+        report.insert(insert_pos, "side", side)
 
     # Kelly sizing (only if bankroll provided and required cols present)
-    if args.bankroll is not None and "projected_probability" in report.columns and "odds" in report.columns:
+    if (args.bankroll is not None) and ("projected_probability" in report.columns) and ("odds" in report.columns):
         def _b_from_american(o: float) -> float:
             # profit multiple per 1 unit staked (not including stake)
             return (o / 100.0) if o > 0 else (100.0 / abs(o))
@@ -141,6 +142,13 @@ if __name__ == "__main__":
     main()
 PY
 
-# normalize line-endings & tabs just in case
+# 3) Normalize line endings & tabs (defensive)
 sed -i 's/\r$//' src/nfl_prop_agent/cli.py
 sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
+
+# 4) Compile check
+python - <<'PY'
+import compileall, sys
+ok = compileall.compile_file('src/nfl_prop_agent/cli.py', quiet=1)
+print("OK" if ok else "FAIL"); sys.exit(0 if ok else 1)
+PY
