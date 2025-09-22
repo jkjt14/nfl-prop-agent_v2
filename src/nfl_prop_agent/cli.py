@@ -1,7 +1,7 @@
-# backup the current file (just in case)
+# backup the current file (optional)
 cp -f src/nfl_prop_agent/cli.py src/nfl_prop_agent/cli.py.bak 2>/dev/null || true
 
-# overwrite with a clean, working version
+# write a known-good version
 cat > src/nfl_prop_agent/cli.py <<'PY'
 """Command-line interface for generating edge reports."""
 from __future__ import annotations
@@ -113,7 +113,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
         else:
             report.insert(insert_pos, "side", "")
 
-    # Optional Kelly sizing columns (top-level, not inside the output block)
+    # Optional Kelly sizing columns
     if (getattr(args, "bankroll", None) is not None
             and "projected_probability" in report.columns
             and "odds" in report.columns):
@@ -149,3 +149,7 @@ def main() -> None:
 if __name__ == "__main__":  # pragma: no cover - manual execution hook
     main()
 PY
+
+# sanitize newlines & tabs just in case
+sed -i 's/\r$//' src/nfl_prop_agent/cli.py
+sed -i 's/\t/    /g' src/nfl_prop_agent/cli.py
