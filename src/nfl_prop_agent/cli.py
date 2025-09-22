@@ -109,7 +109,7 @@ def run_cli(argv: Sequence[str] | None = None) -> pd.DataFrame:
         insert_pos = report.columns.get_loc("odds") + 1 if "odds" in report.columns else len(report.columns)
         if "projected_probability" in report.columns:
             report.insert(insert_pos, "side",
-                          np.where(report["projected_probability"] >= 0.5, "Over", "Under"))
+            np.where(report["projected_probability"] >= 0.5, "Over", "Under"))
         else:
             report.insert(insert_pos, "side", "")
 
